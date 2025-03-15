@@ -1,4 +1,4 @@
-package entities
+package banking
 
 import "time"
 
