@@ -31,4 +31,5 @@ type Transaction struct {
 	Type    TransactionType
 	Date    time.Time
 	ActorID string
+	Delta   AccountDelta
 }

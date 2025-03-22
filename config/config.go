@@ -1,6 +1,7 @@
 package config
 
 import (
+	"oopLab1/pkg/logger"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -37,11 +38,11 @@ func GetConfig() *Config {
 	})
 
 	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
+		logger.Fatal(err.Error())
 	}
 
 	if err := viper.Unmarshal(&config); err != nil {
-		panic(err)
+		logger.Fatal(err.Error())
 	}
 
 	return config
