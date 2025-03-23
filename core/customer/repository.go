@@ -13,6 +13,7 @@ import (
 type CustomerRepository interface {
 	Save(customer *Customer) error
 	GetById(id string) (*Customer, error)
+	GetByEmail(email string) (*Customer, error)
 	GetAll() ([]Customer, error)
 	DeleteById(id string) error
 	Update(updatedCustomer *Customer) error
@@ -41,6 +42,20 @@ func (repos *CustomerRepositoryPostgres) GetById(id string) (*Customer, error) {
               FROM customers WHERE id = $1`
 
 	err := repos.db.Get(customer, query, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return customer, nil
+}
+
+func (repos *CustomerRepositoryPostgres) GetByEmail(email string) (*Customer, error) {
+	var customer *Customer = new(Customer)
+
+	query := `SELECT id, name, phone_number, email, password, country, passport_number, passport_id, access_allowed 
+              FROM customers WHERE email = $1`
+
+	err := repos.db.Get(customer, query, email)
 	if err != nil {
 		return nil, err
 	}

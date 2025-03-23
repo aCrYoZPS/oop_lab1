@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	api_v1 "oopLab1/api/v1"
+	"oopLab1/auth"
 	"oopLab1/config"
 	"oopLab1/pkg/logger"
 
@@ -38,14 +39,16 @@ func NewEchoServer() Server {
 		},
 	}))
 
-	es.server.GET("/customers/:id", api_v1.GetCustomer)
-	es.server.POST("/customers", api_v1.Login)
+	es.server.POST("/customers/register", api_v1.Register)
+	es.server.POST("/customers/login", api_v1.Login)
+	es.server.GET("/customers/:id", api_v1.GetCustomer, auth.JWTMiddleware())
+	es.server.DELETE("/customers/:id", api_v1.DeleteCustomer, auth.JWTMiddleware())
+	es.server.PATCH("/customers/:id", api_v1.UpdateCustomer, auth.JWTMiddleware())
 
 	return &es
 }
 
 func (es *EchoServer) Start() {
-
 	configuration := config.GetConfig()
 	serverConfig := configuration.Server
 	addres := fmt.Sprintf("%s:%d", serverConfig.Host, serverConfig.Port)

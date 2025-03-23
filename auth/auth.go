@@ -8,9 +8,5 @@ import (
 )
 
 func JWTMiddleware() echo.MiddlewareFunc {
-	return echojwt.WithConfig(echojwt.Config{
-		SigningKeys:   map[string]any{"HS256": utils.GetJWTSecret()},
-		SigningMethod: "HS256",
-		TokenLookup:   "header:Authorization",
-	})
+	return echojwt.JWT(utils.GetJWTSecret())
 }
