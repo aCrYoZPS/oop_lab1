@@ -115,7 +115,7 @@ func NewCustomerRepositoryPostgres(configuration *config.DBConfig) CustomerRepos
 				phone_number VARCHAR(20),
 				email VARCHAR(255) UNIQUE NOT NULL,
 				password VARCHAR(255) NOT NULL,
-				country VARCHAR(100),
+				country VARCHAR(100) NOT NULL,
 				passport_number VARCHAR(50) UNIQUE NOT NULL,
 				passport_id VARCHAR(50) UNIQUE NOT NULL,
 				access_allowed BOOLEAN DEFAULT FALSE

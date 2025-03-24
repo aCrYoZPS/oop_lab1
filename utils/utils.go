@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"oopLab1/core/company"
 	"oopLab1/core/customer"
 	"oopLab1/pkg/logger"
 	"os"
@@ -15,6 +16,11 @@ func GetJWTSecret() []byte {
 }
 
 func UpdateCustomerInfo(original *customer.Customer, updated *customer.Customer) {
+	updated.ID = original.ID
+	updated.AccessAllowed = original.AccessAllowed
+}
+
+func UpdateCompanyInfo(original *company.Company, updated *company.Company) {
 	updated.ID = original.ID
 	updated.AccessAllowed = original.AccessAllowed
 }

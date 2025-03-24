@@ -12,6 +12,16 @@ type Account struct {
 	Frozen     bool
 }
 
+type CompanyAccount struct {
+	ID        string
+	Currency  string
+	Balance   float64
+	CompanyID string
+	BankID    string
+	Blocked   bool
+	Frozen    bool
+}
+
 type Loan struct {
 	AccountID         string
 	InterestRate      float64

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"oopLab1/auth"
 	"oopLab1/config"
-	"oopLab1/core/customer"
+	"oopLab1/core/company"
 	myJWT "oopLab1/pkg/jwt"
 	"oopLab1/pkg/logger"
 	"oopLab1/utils"
@@ -15,27 +15,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var custService = customer.NewCustomerService(config.GetConfig().Database)
+var companyService = company.NewCompanyService(config.GetConfig().Database)
 
-func RegisterCustomer(ctx echo.Context) error {
-	cust := new(customer.Customer)
+func RegisterCompany(ctx echo.Context) error {
+	comp := new(company.Company)
 
-	if err := ctx.Bind(cust); err != nil {
+	if err := ctx.Bind(comp); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
 
-	if !customer.IsValid(cust) {
+	if !company.IsValid(comp) {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": "Invalid customer data",
+			"message": "Invalid company data",
 		})
 	}
 
-	cust.ID = uuid.New().String()
-	logger.Info(fmt.Sprintf("Created cust with id %s", cust.ID))
+	comp.ID = uuid.New().String()
+	logger.Info(fmt.Sprintf("Created company with id %s", comp.ID))
 
-	token, err := myJWT.GenerateJWT(cust.ID, "cust")
+	token, err := myJWT.GenerateJWT(comp.ID, "company")
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -43,7 +43,7 @@ func RegisterCustomer(ctx echo.Context) error {
 		})
 	}
 
-	err = custService.CreateCustomer(cust)
+	err = companyService.CreateCompany(comp)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -53,11 +53,11 @@ func RegisterCustomer(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, map[string]string{
 		"token": token,
-		"id":    cust.ID,
+		"id":    comp.ID,
 	})
 }
 
-func LoginCustomer(ctx echo.Context) error {
+func LoginCompany(ctx echo.Context) error {
 	var loginRequest = new(auth.LoginRequest)
 
 	if err := ctx.Bind(loginRequest); err != nil {
@@ -66,21 +66,21 @@ func LoginCustomer(ctx echo.Context) error {
 		})
 	}
 
-	cust, err := custService.GetCustomerByEmail(loginRequest.Username)
+	comp, err := companyService.GetCompanyByEmail(loginRequest.Username)
 
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
-			"message": "Customer with such username doesn't exist",
+			"message": "Company with such username doesn't exist",
 		})
 	}
 
-	if cust.Password != loginRequest.Password {
+	if comp.Password != loginRequest.Password {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": "Wrong password",
 		})
 	}
 
-	token, err := myJWT.GenerateJWT(cust.ID, "cust")
+	token, err := myJWT.GenerateJWT(comp.ID, "comp")
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -90,47 +90,68 @@ func LoginCustomer(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"token": token,
-		"id":    cust.ID,
+		"id":    comp.ID,
 	})
 }
 
-func GetCustomer(ctx echo.Context) error {
+func GetCompany(ctx echo.Context) error {
 	id := ctx.Param("id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
 
-	if userID != id && role == "cust" {
+	if userID != id && role == "company" {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
-			"message": "Acces to other cust banking account is prohibited",
+			"message": "Acces to other comp banking account is prohibited",
 		})
 	}
 
-	cust, err := custService.GetCustomerByID(id)
+	comp, err := companyService.GetCompanyByID(id)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
-	return ctx.JSON(http.StatusOK, cust)
+	return ctx.JSON(http.StatusOK, comp)
 }
 
-func DeleteCustomer(ctx echo.Context) error {
+func GetAllCompanies(ctx echo.Context) error {
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+
+	if role == "company" {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "Acces to other comp banking account is prohibited",
+		})
+	}
+
+	companies, err := companyService.GetAllCompanies()
+
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	return ctx.JSON(http.StatusOK, companies)
+}
+
+func DeleteCompany(ctx echo.Context) error {
 	id := ctx.Param("id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
 
-	if userID != id && role == "cust" {
+	if userID != id && role == "company" {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
-			"message": "Acces to other cust banking account is prohibited",
+			"message": "Acces to other comp banking account is prohibited",
 		})
 	}
 
-	err := custService.DeleteCustomer(id)
+	err := companyService.DeleteCompany(id)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -140,28 +161,28 @@ func DeleteCustomer(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func UpdateCustomer(ctx echo.Context) error {
+func UpdateCompany(ctx echo.Context) error {
 	id := ctx.Param("id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
 
-	if userID != id && role == "cust" {
+	if userID != id && role == "company" {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
-			"message": "Acces to other cust banking account is prohibited",
+			"message": "Acces to other comp banking account is prohibited",
 		})
 	}
 
-	updatedCustomer := new(customer.Customer)
+	updatedCompany := new(company.Company)
 
-	if err := ctx.Bind(updatedCustomer); err != nil {
+	if err := ctx.Bind(updatedCompany); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
 
-	cust, err := custService.GetCustomerByID(userID)
+	comp, err := companyService.GetCompanyByID(userID)
 
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
@@ -169,15 +190,15 @@ func UpdateCustomer(ctx echo.Context) error {
 		})
 	}
 
-	utils.UpdateCustomerInfo(cust, updatedCustomer)
+	utils.UpdateCompanyInfo(comp, updatedCompany)
 
-	if !customer.IsValid(updatedCustomer) {
+	if !company.IsValid(updatedCompany) {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": "Invalid customer data",
+			"message": "Invalid company data",
 		})
 	}
 
-	err = custService.UpdateCustomer(updatedCustomer)
+	err = companyService.UpdateCompany(updatedCompany)
 
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
@@ -185,5 +206,5 @@ func UpdateCustomer(ctx echo.Context) error {
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, updatedCustomer)
+	return ctx.JSON(http.StatusOK, updatedCompany)
 }
