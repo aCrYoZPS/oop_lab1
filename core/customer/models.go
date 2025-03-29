@@ -1,5 +1,7 @@
 package customer
 
+var customerRoles = []string{"customer", "company"}
+
 type Customer struct {
 	ID             string `json:"id,omitempty" db:"id"`
 	Name           string `json:"name,omitempty" db:"name"`

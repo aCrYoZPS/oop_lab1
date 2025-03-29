@@ -1,12 +1,19 @@
 package company
 
-func IsValid(company *Company) bool {
-	if company.Name == "" || company.PhoneNumber == "" ||
-		company.Email == "" || company.Password == "" ||
-		company.Country == "" || company.Type == "" ||
-		company.BIC == "" || company.Address == "" ||
-		company.ANP == "" {
+import "slices"
+
+func IsValid(comp *Company) bool {
+	if comp.Name == "" || comp.PhoneNumber == "" ||
+		comp.Email == "" || comp.Password == "" ||
+		comp.Country == "" || comp.Type == "" ||
+		comp.BIC == "" || comp.Address == "" ||
+		comp.ANP == "" {
 		return false
 	}
+
+	if !slices.Contains(CompanyTypes, comp.Type) {
+		return false
+	}
+
 	return true
 }

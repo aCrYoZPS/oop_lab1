@@ -41,19 +41,19 @@ func NewEchoServer() Server {
 
 	customerGroup := es.server.Group("/customers")
 
-	customerGroup.POST("/customers/register", api_v1.RegisterCustomer)
-	customerGroup.POST("/customers/login", api_v1.LoginCustomer)
-	customerGroup.GET("/customers/:id", api_v1.GetCustomer, auth.JWTMiddleware())
-	customerGroup.DELETE("/customers/:id", api_v1.DeleteCustomer, auth.JWTMiddleware())
-	customerGroup.PATCH("/customers/:id", api_v1.UpdateCustomer, auth.JWTMiddleware())
+	customerGroup.POST("/register", api_v1.RegisterCustomer)
+	customerGroup.POST("/login", api_v1.LoginCustomer)
+	customerGroup.GET("/:id", api_v1.GetCustomer, auth.JWTMiddleware())
+	customerGroup.DELETE("/:id", api_v1.DeleteCustomer, auth.JWTMiddleware())
+	customerGroup.PATCH("/:id", api_v1.UpdateCustomer, auth.JWTMiddleware())
 
 	companyGroup := es.server.Group("/company")
 
-	companyGroup.POST("/company/register", api_v1.RegisterCompany)
-	companyGroup.POST("/customers/login", api_v1.LoginCompany)
-	companyGroup.GET("/customers/:id", api_v1.GetCompany, auth.JWTMiddleware())
-	companyGroup.DELETE("/customers/:id", api_v1.DeleteCompany, auth.JWTMiddleware())
-	companyGroup.PATCH("/customers/:id", api_v1.UpdateCompany, auth.JWTMiddleware())
+	companyGroup.POST("/register", api_v1.RegisterCompany)
+	companyGroup.POST("/login", api_v1.LoginCompany)
+	companyGroup.GET("/:id", api_v1.GetCompany, auth.JWTMiddleware())
+	companyGroup.DELETE("/:id", api_v1.DeleteCompany, auth.JWTMiddleware())
+	companyGroup.PATCH("/:id", api_v1.UpdateCompany, auth.JWTMiddleware())
 
 	return &es
 }

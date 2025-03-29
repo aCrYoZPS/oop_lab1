@@ -119,7 +119,7 @@ func NewCompanyRepositoryPostgres(configuration *config.DBConfig) CompanyReposit
 				password VARCHAR(255) NOT NULL,
 				country VARCHAR(100) NOT NULL,
 				type VARCHAR(32) NOT NULL,
-				bic VACHAR(36) NOT NULL,
+				bic VARCHAR(36) NOT NULL,
 				address VARCHAR(255) NOT NULL,
 				anp VARCHAR(36) NOT NULL,
 				access_allowed BOOLEAN DEFAULT FALSE
