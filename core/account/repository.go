@@ -87,13 +87,13 @@ func (repos *AccountRepositoryPostgres) DeleteById(id string) error {
 	return err
 }
 
-func (repos *AccountRepositoryPostgres) Update(updatedCusomer *Account) error {
+func (repos *AccountRepositoryPostgres) Update(updatedAccount *Account) error {
 	query := `UPDATE accounts
 				SET balance = :balance,
 					blocked = :blocked,
 				WHERE id = :id`
 
-	_, err := repos.db.NamedExec(query, updatedCusomer)
+	_, err := repos.db.NamedExec(query, updatedAccount)
 
 	if err != nil {
 		return err

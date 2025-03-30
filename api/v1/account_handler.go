@@ -1,14 +1,9 @@
 package api_v1
 
 import (
-	"fmt"
 	"net/http"
-	"oopLab1/auth"
 	"oopLab1/config"
 	"oopLab1/core/account"
-	myJWT "oopLab1/pkg/jwt"
-	"oopLab1/pkg/logger"
-	"oopLab1/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -17,14 +12,53 @@ import (
 
 var accountService = account.NewAccountService(config.GetConfig().Database)
 
+func CreateAccount(ctx echo.Context) error {
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"].(string)
+
+	var accRequest = &account.AccountRequest{}
+
+	if err := ctx.Bind(accRequest); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "Invalid request",
+		})
+	}
+
+	acc, err := account.NewAccountFromRequest(accRequest, userID)
+
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	// TODO:
+	// check bank
+
+	acc.ID = uuid.New().String()
+
+	err = accountService.CreateAccount(acc)
+
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusCreated, map[string]string{
+		"id": acc.ID,
+	})
+}
+
 func GetAccount(ctx echo.Context) error {
-	id := ctx.Param("id")
+	acc_id := ctx.Param("acc_id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
 
-	acc, err := accountService.GetAccountByID(id)
+	acc, err := accountService.GetAccountByID(acc_id)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -42,19 +76,11 @@ func GetAccount(ctx echo.Context) error {
 }
 
 func GetAllAccountsByOwner(ctx echo.Context) error {
-	id := ctx.Param("id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	user_id := claims["user_id"].(string)
-	role := claims["role"].(string)
+	userID := claims["user_id"].(string)
 
-	if id != user_id && (role == "customer" || role == "accany") {
-		return ctx.JSON(http.StatusForbidden, map[string]string{
-			"message": "Access to others accounts is prohibited",
-		})
-	}
-
-	accounts, err := accountService.GetAllAccountsByOwner(id)
+	accounts, err := accountService.GetAllAccountsByOwner(userID)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -87,13 +113,13 @@ func GetAllAccounts(ctx echo.Context) error {
 }
 
 func DeleteAccount(ctx echo.Context) error {
-	id := ctx.Param("id")
+	acc_id := ctx.Param("acc_id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
 
-	acc, err := accountService.GetAccountByID(id)
+	acc, err := accountService.GetAccountByID(acc_id)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -101,18 +127,19 @@ func DeleteAccount(ctx echo.Context) error {
 		})
 	}
 
-	if userID != acc.CustomerID && role == "account" {
+	if userID != acc.CustomerID && (role == "customer" || role == "company") {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Acces to other acc banking account is prohibited",
 		})
 	}
 
-	err = accountService.DeleteAccount(id)
+	err = accountService.DeleteAccount(acc_id)
 
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
+
 	return ctx.NoContent(http.StatusNoContent)
 }

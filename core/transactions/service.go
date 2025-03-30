@@ -10,20 +10,20 @@ func NewTransactionService(config *config.DBConfig) *TransactionService {
 	return &TransactionService{repos: NewTransactionRepositoryPostgres(config)}
 }
 
-func (s *TransactionService) CreateTransaction(account *Transaction) error {
-	return s.repos.Save(account)
+func (s *TransactionService) CreateTransaction(transaction *Transaction) error {
+	return s.repos.Save(transaction)
 }
 
 func (s *TransactionService) GetTransactionByID(id string) (*Transaction, error) {
 	return s.repos.GetById(id)
 }
 
-func (s *TransactionService) GetAllOutboundTransactions(account_id string) ([]Transaction, error) {
-	return s.repos.GetAllOutbound(account_id)
+func (s *TransactionService) GetAllOutboundTransactions(transaction_id string) ([]Transaction, error) {
+	return s.repos.GetAllOutbound(transaction_id)
 }
 
-func (s *TransactionService) GetAllInboundTransactions(account_id string) ([]Transaction, error) {
-	return s.repos.GetAllInbound(account_id)
+func (s *TransactionService) GetAllInboundTransactions(transaction_id string) ([]Transaction, error) {
+	return s.repos.GetAllInbound(transaction_id)
 }
 
 func (s *TransactionService) GetAllTransactions() ([]Transaction, error) {

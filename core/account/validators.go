@@ -2,8 +2,8 @@ package account
 
 import "slices"
 
-func IsValid(acc *Account) bool {
-	if slices.Contains(currencies, acc.Currency) {
+func IsValid(request *AccountRequest) bool {
+	if !slices.Contains(currencies, request.Currency) {
 		return false
 	}
 	return true
