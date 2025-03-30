@@ -17,7 +17,7 @@ func CreateAccount(ctx echo.Context) error {
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 
-	var accRequest = &account.AccountRequest{}
+	accRequest := &account.AccountRequest{}
 
 	if err := ctx.Bind(accRequest); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -26,7 +26,6 @@ func CreateAccount(ctx echo.Context) error {
 	}
 
 	acc, err := account.NewAccountFromRequest(accRequest, userID)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -39,7 +38,6 @@ func CreateAccount(ctx echo.Context) error {
 	acc.ID = uuid.New().String()
 
 	err = accountService.CreateAccount(acc)
-
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
@@ -59,9 +57,8 @@ func GetAccount(ctx echo.Context) error {
 	role := claims["role"].(string)
 
 	acc, err := accountService.GetAccountByID(acc_id)
-
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, map[string]string{
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
 		})
 	}
@@ -70,6 +67,17 @@ func GetAccount(ctx echo.Context) error {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Access to other acc banking account is prohibited",
 		})
+	}
+
+	trans, err := transactionService.GetAllByAccount(acc.ID)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	for _, transaction := range trans {
+		account.ApplyTransaction(acc, &transaction)
 	}
 
 	return ctx.JSON(http.StatusOK, acc)
@@ -81,11 +89,22 @@ func GetAllAccountsByOwner(ctx echo.Context) error {
 	userID := claims["user_id"].(string)
 
 	accounts, err := accountService.GetAllAccountsByOwner(userID)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
+	}
+
+	for index, acc := range accounts {
+		trans, err := transactionService.GetAllByAccount(acc.ID)
+		if err != nil {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"message": err.Error(),
+			})
+		}
+		for _, transaction := range trans {
+			account.ApplyTransaction(&accounts[index], &transaction)
+		}
 	}
 
 	return ctx.JSON(http.StatusOK, accounts)
@@ -103,12 +122,24 @@ func GetAllAccounts(ctx echo.Context) error {
 	}
 
 	accounts, err := accountService.GetAllAccounts()
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
+
+	for index, acc := range accounts {
+		trans, err := transactionService.GetAllByAccount(acc.ID)
+		if err != nil {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"message": err.Error(),
+			})
+		}
+		for _, transaction := range trans {
+			account.ApplyTransaction(&accounts[index], &transaction)
+		}
+	}
+
 	return ctx.JSON(http.StatusOK, accounts)
 }
 
@@ -120,7 +151,6 @@ func DeleteAccount(ctx echo.Context) error {
 	role := claims["role"].(string)
 
 	acc, err := accountService.GetAccountByID(acc_id)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -134,7 +164,6 @@ func DeleteAccount(ctx echo.Context) error {
 	}
 
 	err = accountService.DeleteAccount(acc_id)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),

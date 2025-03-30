@@ -18,6 +18,7 @@ type TransactionRepository interface {
 	GetAllInbound(account_id string) ([]Transaction, error)
 	GetAllOutbound(account_id string) ([]Transaction, error)
 	GetAllByActor(actor_id string) ([]Transaction, error)
+	GetAllByAccount(account_id string) ([]Transaction, error)
 }
 
 type TransactionRepositoryPostgres struct {
@@ -36,7 +37,7 @@ func (repos *TransactionRepositoryPostgres) Save(transaction *Transaction) error
 }
 
 func (repos *TransactionRepositoryPostgres) GetById(id string) (*Transaction, error) {
-	query := `SELECT * FROM transactions WHERE id = $1`
+	query := `SELECT * FROM transactions WHERE id = $1 ORDER BY date ASC`
 	transaction := &Transaction{}
 
 	err := repos.db.Get(transaction, query, id)
@@ -46,7 +47,7 @@ func (repos *TransactionRepositoryPostgres) GetById(id string) (*Transaction, er
 
 func (repos *TransactionRepositoryPostgres) GetAll() ([]Transaction, error) {
 	var transactions []Transaction
-	query := "SELECT * FROM transactions"
+	query := "SELECT * FROM transactions ORDER BY date ASC"
 
 	err := repos.db.Select(&transactions, query)
 
@@ -55,7 +56,7 @@ func (repos *TransactionRepositoryPostgres) GetAll() ([]Transaction, error) {
 
 func (repos *TransactionRepositoryPostgres) GetAllOutbound(account_id string) ([]Transaction, error) {
 	var transactions []Transaction
-	query := "SELECT * FROM transactions WHERE src_account_id = $1"
+	query := "SELECT * FROM transactions WHERE src_account_id = $1 ORDER BY date ASC"
 
 	err := repos.db.Select(&transactions, query, account_id)
 
@@ -64,7 +65,7 @@ func (repos *TransactionRepositoryPostgres) GetAllOutbound(account_id string) ([
 
 func (repos *TransactionRepositoryPostgres) GetAllInbound(account_id string) ([]Transaction, error) {
 	var transactions []Transaction
-	query := "SELECT * FROM transactions WHERE dest_account_id = $1"
+	query := "SELECT * FROM transactions WHERE dest_account_id = $1 ORDER BY date ASC"
 
 	err := repos.db.Select(&transactions, query, account_id)
 
@@ -73,7 +74,7 @@ func (repos *TransactionRepositoryPostgres) GetAllInbound(account_id string) ([]
 
 func (repos *TransactionRepositoryPostgres) GetAllByActor(actor_id string) ([]Transaction, error) {
 	var transactions []Transaction
-	query := "SELECT * FROM transactions WHERE actor_id = $1"
+	query := "SELECT * FROM transactions WHERE actor_id = $1 ORDER BY date ASC"
 
 	err := repos.db.Select(&transactions, query, actor_id)
 
@@ -81,30 +82,37 @@ func (repos *TransactionRepositoryPostgres) GetAllByActor(actor_id string) ([]Tr
 }
 
 func (repos *TransactionRepositoryPostgres) DeleteById(id string) error {
-	query := `DELETE FROM transactions WHERE id = $1`
+	query := `DELETE FROM transactions WHERE id = $1 ORDER BY date ASC`
 
 	_, err := repos.db.Exec(query, id)
 
 	return err
 }
 
+func (repos *TransactionRepositoryPostgres) GetAllByAccount(account_id string) ([]Transaction, error) {
+	var transactions []Transaction
+	query := "SELECT * FROM transactions WHERE dest_account_id = $1 OR src_account_id = $1 ORDER BY date ASC"
+
+	err := repos.db.Select(&transactions, query, account_id)
+
+	return transactions, err
+}
+
 func NewTransactionRepositoryPostgres(configuration *config.DBConfig) TransactionRepository {
 	db := storage_postgres.GetPostgresDB(configuration)
-
 	query := `CREATE EXTENSION IF NOT EXISTS pgcrypto;
-		      CREATE TABLE IF NOT EXISTS transactions(
+		      CREATE TABLE IF NOT EXISTS transactions (
 				id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
 				type INT NOT NULL,
 				date TIMESTAMP NOT NULL,
 				actor_id VARCHAR(36) NOT NULL,
-				src_account_id VARCHAR(36) NOT NULL REFERENCES accounts(id),
-				dest_account_id VARCHAR(36) NOT NULL REFERENCES accounts(id),
+				src_account_id VARCHAR(36) NOT NULL REFERENCES accounts (id),
+				dest_account_id VARCHAR(36) NOT NULL REFERENCES accounts (id),
 				money_delta DOUBLE PRECISION NOT NULL,
-				blocked BOOL NOT NULL,
+				blocked BOOL NOT NULL
 			  );`
 
 	_, err := db.Exec(query)
-
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Failed creating transaction db: %s", err.Error()))
 	}

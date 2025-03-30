@@ -26,6 +26,10 @@ func (s *TransactionService) GetAllInboundTransactions(transaction_id string) ([
 	return s.repos.GetAllInbound(transaction_id)
 }
 
+func (s *TransactionService) GetAllByAccount(account_id string) ([]Transaction, error) {
+	return s.repos.GetAllByAccount(account_id)
+}
+
 func (s *TransactionService) GetAllTransactions() ([]Transaction, error) {
 	return s.repos.GetAll()
 }

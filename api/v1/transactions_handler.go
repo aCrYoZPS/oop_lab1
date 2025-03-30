@@ -3,6 +3,7 @@ package api_v1
 import (
 	"net/http"
 	"oopLab1/config"
+	"oopLab1/core/account"
 	"oopLab1/core/transactions"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 var transactionService = transactions.NewTransactionService(config.GetConfig().Database)
 
 func CreateSelfTransaction(ctx echo.Context) error {
-	id := ctx.Param("id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
@@ -23,7 +23,7 @@ func CreateSelfTransaction(ctx echo.Context) error {
 
 	acc, err := accountService.GetAccountByID(acc_id)
 
-	if (id != userID || acc.CustomerID != userID) && (role == "customer" || role == "company") {
+	if acc.CustomerID != userID && (role == "customer" || role == "company") {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Access to other acc banking account is prohibited",
 		})
@@ -35,8 +35,18 @@ func CreateSelfTransaction(ctx echo.Context) error {
 		})
 	}
 
-	var transact = &transactions.Transaction{}
+	trans, err := transactionService.GetAllByAccount(acc.ID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
 
+	for _, transaction := range trans {
+		account.ApplyTransaction(acc, &transaction)
+	}
+
+	transact := &transactions.Transaction{}
 	delta := &transactions.AccountDelta{}
 
 	if err = ctx.Bind(delta); err != nil {
@@ -45,21 +55,30 @@ func CreateSelfTransaction(ctx echo.Context) error {
 		})
 	}
 
+	delta.Blocked = acc.Blocked
+
 	transact.ID = uuid.NewString()
-	transact.Delta = *delta
+	transact.MoneyDelta = delta.MoneyDelta
+	transact.Blocked = delta.Blocked
 	transact.ActorID = userID
 	transact.SrcAccountID = acc_id
 	transact.DestAccountID = acc_id
 	transact.Date = time.Now()
 
-	if !transactions.IsApplicable(transact, acc) {
+	if acc.Balance+transact.MoneyDelta < 0 {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": "Transaction inapplicable",
+			"message": "Inapplicable transaction",
+		})
+	}
+
+	err = transactionService.CreateTransaction(transact)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "Failed to create transaction",
 		})
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": "Transaction succesfull",
 	})
-
 }

@@ -25,5 +25,5 @@ type Transaction struct {
 	ActorID       string          `db:"actor_id" json:"actor_id,omitempty"`
 	SrcAccountID  string          `db:"src_account_id" json:"src_account_id,omitempty"`
 	DestAccountID string          `db:"dest_account_id" json:"dest_account_id,omitempty"`
-	Delta         AccountDelta    `json:"delta"`
+	AccountDelta  `json:"delta"`
 }

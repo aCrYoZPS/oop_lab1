@@ -56,14 +56,13 @@ func NewEchoServer() Server {
 	companyGroup.PATCH("/:id", api_v1.UpdateCompany, auth.JWTMiddleware())
 
 	accountGroup := es.server.Group("/account")
-	accountGroup.POST("/", api_v1.CreateAccount, auth.JWTMiddleware())
+	accountGroup.POST("", api_v1.CreateAccount, auth.JWTMiddleware())
 	accountGroup.DELETE("/:acc_id", api_v1.DeleteAccount, auth.JWTMiddleware())
 	accountGroup.GET("/:acc_id", api_v1.GetAccount, auth.JWTMiddleware())
-	accountGroup.GET("/", api_v1.GetAllAccountsByOwner, auth.JWTMiddleware())
+	accountGroup.GET("", api_v1.GetAllAccountsByOwner, auth.JWTMiddleware())
+	accountGroup.POST("/:acc_id/withdaw_topup", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
 
-	transactionGroup := es.server.Group("/transaction")
-	transactionGroup.POST("/:acc_id/withdaw_topup", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
-	transactionGroup.POST("/:acc_id/transfer/:dest_acc_id", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
+	// transactionGroup.POST("/:acc_id/transfer/:dest_acc_id", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
 	return &es
 }
 

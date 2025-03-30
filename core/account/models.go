@@ -1,6 +1,9 @@
 package account
 
-import "errors"
+import (
+	"errors"
+	"oopLab1/core/transactions"
+)
 
 var currencies = []string{"USD", "RUB", "BYN", "EUR"}
 
@@ -27,4 +30,15 @@ func NewAccountFromRequest(request *AccountRequest, owner_id string) (*Account, 
 		BankID:     request.BankID,
 		CustomerID: owner_id,
 	}, nil
+}
+
+func ApplyTransaction(account *Account, transaction *transactions.Transaction) error {
+	if (account.Balance + transaction.MoneyDelta) < 0 {
+		return errors.New("Transaction failed to apply")
+	}
+
+	account.Blocked = transaction.Blocked
+	account.Balance += transaction.MoneyDelta
+
+	return nil
 }
