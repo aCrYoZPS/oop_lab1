@@ -1,7 +1,7 @@
 package staff
 
 var staffRoles = []string{
-	"operator", "admin",
+	"operator", "manager", "admin",
 }
 
 type StaffMember struct {

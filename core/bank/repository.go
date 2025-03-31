@@ -23,8 +23,8 @@ type BankRepositoryPostgres struct {
 }
 
 func (repos *BankRepositoryPostgres) Save(bank *Bank) error {
-	query := `INSERT INTO banks (id, name, country, bic)
-			  VALUES (:id, :name, :country, :bic)`
+	query := `INSERT INTO banks (id, name, country, bic, account_id)
+	          VALUES (:id, :name, :country, :bic, :account_id)`
 
 	_, err := repos.db.NamedExec(query, bank)
 
@@ -75,13 +75,13 @@ func NewBankRepositoryPostgres(configuration *config.DBConfig) BankRepository {
 	query := `CREATE EXTENSION IF NOT EXISTS pgcrypto;
 		      CREATE TABLE IF NOT EXISTS banks(
 				id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-				name VARCHAR(255) NOT NULL,
+				name VARCHAR(255) NOT NULL UNIQUE,
 				country VARCHAR(100) NOT NULL,
-				bic VARCHAR(11) UNIQUE NOT NULL
+				bic VARCHAR(11) UNIQUE NOT NULL,
+				account_id VARCHAR(36) NOT NULL
 			  );`
 
 	_, err := db.Exec(query)
-
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Failed creating bank db: %s", err.Error()))
 	}
