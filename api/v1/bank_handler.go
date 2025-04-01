@@ -103,3 +103,56 @@ func DeleteBank(ctx echo.Context) error {
 
 	return ctx.NoContent(http.StatusNoContent)
 }
+
+func UpdateBank(ctx echo.Context) error {
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"].(string)
+	role := claims["role"].(string)
+
+	if role != "admin" {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "Only administrator can make that decision",
+		})
+	}
+
+	admin, err := staffService.GetStaffMemberByID(userID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	err = bankService.DeleteBank(admin.BankID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+func GetBankByID(ctx echo.Context) error {
+	bank_id := ctx.Param("bank_id")
+
+	bank, err := bankService.GetBankByID(bank_id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, bank)
+}
+
+func GetAllBanks(ctx echo.Context) error {
+	banks, err := bankService.GetAllBanks()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, banks)
+}
