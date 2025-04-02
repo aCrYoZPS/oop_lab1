@@ -190,7 +190,7 @@ func UpdateCompany(ctx echo.Context) error {
 		})
 	}
 
-	utils.UpdateCompanyInfo(comp, updatedCompany)
+	company.UpdateCompanyInfo(comp, updatedCompany)
 
 	if !company.IsValid(updatedCompany) {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{

@@ -169,7 +169,7 @@ func UpdateCustomer(ctx echo.Context) error {
 		})
 	}
 
-	utils.UpdateCustomerInfo(cust, updatedCustomer)
+	customer.UpdateCustomerInfo(cust, updatedCustomer)
 
 	if !customer.IsValid(updatedCustomer) {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{

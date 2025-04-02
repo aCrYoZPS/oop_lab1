@@ -13,3 +13,8 @@ type Customer struct {
 	PassportID     string `json:"passport_id,omitempty" db:"passport_id"`
 	AccessAllowed  bool   `json:"access_allowed,omitempty" db:"access_allowed"`
 }
+
+func UpdateCustomerInfo(original *Customer, updated *Customer) {
+	updated.ID = original.ID
+	updated.AccessAllowed = original.AccessAllowed
+}

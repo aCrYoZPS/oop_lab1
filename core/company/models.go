@@ -29,3 +29,8 @@ type SallaryProject struct {
 	Sallary           float64
 	PaymentDate       time.Time
 }
+
+func UpdateCompanyInfo(original *Company, updated *Company) {
+	updated.ID = original.ID
+	updated.AccessAllowed = original.AccessAllowed
+}

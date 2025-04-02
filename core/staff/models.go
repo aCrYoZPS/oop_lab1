@@ -13,3 +13,8 @@ type StaffMember struct {
 	BankID      string `db:"bank_id" json:"bank_id,omitempty"`
 	Role        string `db:"role" json:"role,omitempty"`
 }
+
+func UpdateStaffMemberInfo(original *StaffMember, updated *StaffMember) {
+	updated.ID = original.ID
+	updated.BankID = original.BankID
+}

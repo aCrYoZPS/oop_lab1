@@ -14,3 +14,9 @@ type BankRegistrationRequest struct {
 	Bank  Bank              `json:"bank"`
 	Admin staff.StaffMember `json:"admin"`
 }
+
+func UpdateBankInfo(original *Bank, updated *Bank) {
+	updated.ID = original.ID
+	updated.BIC = original.BIC
+	updated.AccountID = original.AccountID
+}

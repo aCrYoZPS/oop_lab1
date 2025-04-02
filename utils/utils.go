@@ -2,8 +2,6 @@ package utils
 
 import (
 	"oopLab1/core/account"
-	"oopLab1/core/company"
-	"oopLab1/core/customer"
 	"oopLab1/core/transactions"
 	"oopLab1/pkg/logger"
 	"os"
@@ -17,16 +15,23 @@ func GetJWTSecret() []byte {
 	return secret
 }
 
-func UpdateCustomerInfo(original *customer.Customer, updated *customer.Customer) {
-	updated.ID = original.ID
-	updated.AccessAllowed = original.AccessAllowed
-}
-
-func UpdateCompanyInfo(original *company.Company, updated *company.Company) {
-	updated.ID = original.ID
-	updated.AccessAllowed = original.AccessAllowed
-}
-
 func IsApplicable(transaction *transactions.Transaction, acc *account.Account) bool {
 	return (acc.Balance + transaction.MoneyDelta) >= 0
+}
+
+func GetPrivelegeLevel(role string) int {
+	switch role {
+	case "customer":
+		return 0
+	case "company":
+		return 1
+	case "operator":
+		return 2
+	case "manager":
+		return 3
+	case "admin":
+		return 4
+	default:
+		return -1
+	}
 }

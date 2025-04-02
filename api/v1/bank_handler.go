@@ -8,6 +8,7 @@ import (
 	"oopLab1/core/staff"
 	myJWT "oopLab1/pkg/jwt"
 	"oopLab1/pkg/logger"
+	"oopLab1/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -105,32 +106,44 @@ func DeleteBank(ctx echo.Context) error {
 }
 
 func UpdateBank(ctx echo.Context) error {
+	bank_id := ctx.Param("bank_id")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
-	role := claims["role"].(string)
 
-	if role != "admin" {
+	admin, err := staffService.GetStaffMemberByID(userID)
+	if admin.Role != "admin" || admin.BankID != bank_id {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Only administrator can make that decision",
 		})
 	}
 
-	admin, err := staffService.GetStaffMemberByID(userID)
+	currentBank, err := bankService.GetBankByID(bank_id)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
 		})
 	}
 
-	err = bankService.DeleteBank(admin.BankID)
+	updatedBank := &bank.Bank{}
+	ctx.Bind(updatedBank)
+
+	if !bank.IsValid(updatedBank) {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "Invalid customer data",
+		})
+	}
+
+	bank.UpdateBankInfo(currentBank, updatedBank)
+
+	err = bankService.UpdateBank(updatedBank)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
 		})
 	}
 
-	return ctx.NoContent(http.StatusNoContent)
+	return ctx.JSON(http.StatusOK, updatedBank)
 }
 
 func GetBankByID(ctx echo.Context) error {

@@ -40,7 +40,6 @@ func NewEchoServer() Server {
 	}))
 
 	customerGroup := es.server.Group("/customers")
-
 	customerGroup.POST("/register", api_v1.RegisterCustomer)
 	customerGroup.POST("/login", api_v1.LoginCustomer)
 	customerGroup.GET("/:id", api_v1.GetCustomer, auth.JWTMiddleware())
@@ -48,7 +47,6 @@ func NewEchoServer() Server {
 	customerGroup.PATCH("/:id", api_v1.UpdateCustomer, auth.JWTMiddleware())
 
 	companyGroup := es.server.Group("/company")
-
 	companyGroup.POST("/register", api_v1.RegisterCompany)
 	companyGroup.POST("/login", api_v1.LoginCompany)
 	companyGroup.GET("/:id", api_v1.GetCompany, auth.JWTMiddleware())
@@ -62,6 +60,12 @@ func NewEchoServer() Server {
 	accountGroup.GET("", api_v1.GetAllAccountsByOwner, auth.JWTMiddleware())
 	accountGroup.POST("/:acc_id/withdaw_topup", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
 
+	staffGroup := es.server.Group("/staff")
+	staffGroup.POST("/register", api_v1.RegisterStaffMember)
+	staffGroup.POST("/login", api_v1.LoginStaffMember)
+	staffGroup.GET("/:id", api_v1.GetStaffMember, auth.JWTMiddleware())
+	staffGroup.DELETE("/:id", api_v1.DeleteStaffMember, auth.JWTMiddleware())
+	staffGroup.PATCH("/:id", api_v1.UpdateStaffMember, auth.JWTMiddleware())
 	// transactionGroup.POST("/:acc_id/transfer/:dest_acc_id", api_v1.CreateSelfTransaction, auth.JWTMiddleware())
 	return &es
 }
