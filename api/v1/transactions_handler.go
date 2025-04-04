@@ -22,16 +22,15 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	acc_id := ctx.Param("acc_id")
 
 	acc, err := accountService.GetAccountByID(acc_id)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
 
 	if acc.CustomerID != userID && (role == "customer" || role == "company") {
 		return ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Access to other acc banking account is prohibited",
-		})
-	}
-
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": err.Error(),
 		})
 	}
 
@@ -63,6 +62,86 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	transact.ActorID = userID
 	transact.SrcAccountID = acc_id
 	transact.DestAccountID = acc_id
+	transact.Date = time.Now()
+
+	if acc.Balance+transact.MoneyDelta < 0 {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "Inapplicable transaction",
+		})
+	}
+
+	err = transactionService.CreateTransaction(transact)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "Failed to create transaction",
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": "Transaction succesfull",
+	})
+
+}
+
+func CreateTransaction(ctx echo.Context) error {
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"].(string)
+	acc_id := ctx.Param("acc_id")
+	target_id := ctx.Param("target_id")
+
+	acc, err := accountService.GetAccountByID(acc_id)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	if acc.CustomerID != userID {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "Forbidden",
+		})
+	}
+
+	target_acc, err := accountService.GetAccountByID(target_id)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	trans, err := transactionService.GetAllByAccount(acc.ID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	for _, transaction := range trans {
+		account.ApplyTransaction(acc, &transaction)
+	}
+
+	for _, transaction := range trans {
+		account.ApplyTransaction(target_acc, &transaction)
+	}
+
+	transact := &transactions.Transaction{}
+	delta := &transactions.AccountDelta{}
+
+	if err = ctx.Bind(delta); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "bad request",
+		})
+	}
+
+	delta.Blocked = acc.Blocked
+
+	transact.ID = uuid.NewString()
+	transact.MoneyDelta = delta.MoneyDelta
+	transact.Blocked = delta.Blocked
+	transact.ActorID = userID
+	transact.SrcAccountID = acc_id
+	transact.DestAccountID = target_id
 	transact.Date = time.Now()
 
 	if acc.Balance+transact.MoneyDelta < 0 {

@@ -8,7 +8,6 @@ import (
 	"oopLab1/core/company"
 	myJWT "oopLab1/pkg/jwt"
 	"oopLab1/pkg/logger"
-	"oopLab1/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

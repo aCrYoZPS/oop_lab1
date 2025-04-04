@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"oopLab1/config"
+	"oopLab1/core/account"
 	"oopLab1/core/bank"
 	"oopLab1/core/staff"
 	myJWT "oopLab1/pkg/jwt"
 	"oopLab1/pkg/logger"
-	"oopLab1/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -46,7 +46,22 @@ func RegisterBank(ctx echo.Context) error {
 		})
 	}
 
-	err := bankService.CreateBank(bankInstance)
+	bankAccount := &account.Account{}
+	bankAccount.ID = uuid.NewString()
+	bankAccount.BankID = bankInstance.ID
+	bankAccount.CustomerID = bankInstance.ID
+
+	err := accountService.CreateAccount(bankAccount)
+	if err != nil {
+		bankService.DeleteBank(bankInstance.ID)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	bankInstance.AccountID = bankAccount.ID
+
+	err = bankService.CreateBank(bankInstance)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),

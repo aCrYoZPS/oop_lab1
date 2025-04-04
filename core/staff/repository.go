@@ -118,7 +118,7 @@ func NewStaffMemberRepositoryPostgres(configuration *config.DBConfig) StaffMembe
 				email VARCHAR(255) UNIQUE NOT NULL,
 				password VARCHAR(255) NOT NULL,
 				bank_id VARCHAR(100) NOT NULL,
-				role VARCHAR(50) NOT NULL,
+				role VARCHAR(50) NOT NULL
 			  );`
 
 	_, err := db.Exec(query)

@@ -25,15 +25,19 @@ func CreateAccount(ctx echo.Context) error {
 		})
 	}
 
+	_, err := bankService.GetBankByID(accRequest.BankID)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "Invalid request",
+		})
+	}
+
 	acc, err := account.NewAccountFromRequest(accRequest, userID)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
-
-	// TODO:
-	// check bank
 
 	acc.ID = uuid.New().String()
 
