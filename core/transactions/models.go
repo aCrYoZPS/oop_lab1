@@ -8,9 +8,6 @@ const (
 	MoneyTransfer TransactionType = iota
 	Withdrawal
 	TopUp
-
-	AccountBlock
-	AccountUnblock
 )
 
 type AccountDelta struct {

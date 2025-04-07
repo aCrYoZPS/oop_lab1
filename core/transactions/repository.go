@@ -91,7 +91,7 @@ func (repos *TransactionRepositoryPostgres) DeleteById(id string) error {
 
 func (repos *TransactionRepositoryPostgres) GetAllByAccount(account_id string) ([]Transaction, error) {
 	var transactions []Transaction
-	query := "SELECT * FROM transactions WHERE dest_account_id = $1 OR src_account_id = $1 ORDER BY date ASC"
+	query := "SELECT * FROM transactions WHERE dest_account_id = $1 OR src_account_id = $1 ORDER BY date DESC"
 
 	err := repos.db.Select(&transactions, query, account_id)
 

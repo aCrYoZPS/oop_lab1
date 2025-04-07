@@ -5,6 +5,7 @@ import (
 	"oopLab1/config"
 	"oopLab1/core/account"
 	"oopLab1/core/transactions"
+	"oopLab1/utils"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -54,6 +55,12 @@ func CreateSelfTransaction(ctx echo.Context) error {
 		})
 	}
 
+	if acc.Blocked {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "account blocked",
+		})
+	}
+
 	delta.Blocked = acc.Blocked
 
 	transact.ID = uuid.NewString()
@@ -62,6 +69,11 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	transact.ActorID = userID
 	transact.SrcAccountID = acc_id
 	transact.DestAccountID = acc_id
+	if transact.MoneyDelta > 0 {
+		transact.Type = transactions.TopUp
+	} else {
+		transact.Type = transactions.Withdrawal
+	}
 	transact.Date = time.Now()
 
 	if acc.Balance+transact.MoneyDelta < 0 {
@@ -80,7 +92,6 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": "Transaction succesfull",
 	})
-
 }
 
 func CreateTransaction(ctx echo.Context) error {
@@ -103,7 +114,13 @@ func CreateTransaction(ctx echo.Context) error {
 		})
 	}
 
-	target_acc, err := accountService.GetAccountByID(target_id)
+	if acc.Blocked {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "account blocked",
+		})
+	}
+
+	_, err = accountService.GetAccountByID(target_id)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -121,10 +138,6 @@ func CreateTransaction(ctx echo.Context) error {
 		account.ApplyTransaction(acc, &transaction)
 	}
 
-	for _, transaction := range trans {
-		account.ApplyTransaction(target_acc, &transaction)
-	}
-
 	transact := &transactions.Transaction{}
 	delta := &transactions.AccountDelta{}
 
@@ -136,11 +149,24 @@ func CreateTransaction(ctx echo.Context) error {
 
 	delta.Blocked = acc.Blocked
 
+	if acc.Blocked {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "blocked",
+		})
+	}
+
+	if delta.MoneyDelta > 0 {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "unable to take money from other account",
+		})
+	}
+
 	transact.ID = uuid.NewString()
 	transact.MoneyDelta = delta.MoneyDelta
 	transact.Blocked = delta.Blocked
 	transact.ActorID = userID
 	transact.SrcAccountID = acc_id
+	transact.Type = transactions.MoneyTransfer
 	transact.DestAccountID = target_id
 	transact.Date = time.Now()
 
@@ -159,5 +185,45 @@ func CreateTransaction(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": "Transaction succesfull",
+	})
+}
+
+func UndoRecentTransactions(ctx echo.Context) error {
+	acc_id := ctx.Param("acc_id")
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+
+	if utils.GetPrivelegeLevel(role) < utils.GetPrivelegeLevel("manager") {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "only managers and admins can undo transactions",
+		})
+	}
+
+	accTransactions, err := transactionService.GetAllByAccount(acc_id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	trans := accTransactions[0]
+	err = transactionService.DeleteTransaction(trans.ID)
+	if err != nil || trans.Type == transactions.Withdrawal || trans.Type == transactions.TopUp {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	trans = accTransactions[1]
+	err = transactionService.DeleteTransaction(trans.ID)
+	if err != nil || trans.Type == transactions.Withdrawal || trans.Type == transactions.TopUp {
+		return ctx.JSON(http.StatusOK, map[string]string{
+			"message": "one transaction undone succesfully",
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": "Transactions undone succesfully",
 	})
 }

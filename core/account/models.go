@@ -3,6 +3,7 @@ package account
 import (
 	"errors"
 	"oopLab1/core/transactions"
+	"oopLab1/pkg/logger"
 )
 
 var currencies = []string{"USD", "RUB", "BYN", "EUR"}
@@ -33,12 +34,17 @@ func NewAccountFromRequest(request *AccountRequest, owner_id string) (*Account, 
 }
 
 func ApplyTransaction(account *Account, transaction *transactions.Transaction) error {
-	if (account.Balance + transaction.MoneyDelta) < 0 {
-		return errors.New("Transaction failed to apply")
-	}
+	if transaction.DestAccountID == account.ID && transaction.SrcAccountID != account.ID {
+		account.Balance -= transaction.MoneyDelta
+		logger.Info("inbound processed")
+	} else {
+		if (account.Balance + transaction.MoneyDelta) < 0 {
+			return errors.New("Transaction failed to apply")
+		}
 
-	account.Blocked = transaction.Blocked
-	account.Balance += transaction.MoneyDelta
+		account.Blocked = transaction.Blocked
+		account.Balance += transaction.MoneyDelta
+	}
 
 	return nil
 }

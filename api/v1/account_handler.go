@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"oopLab1/config"
 	"oopLab1/core/account"
+	"oopLab1/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -175,4 +176,69 @@ func DeleteAccount(ctx echo.Context) error {
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
+}
+
+func BlockAccount(ctx echo.Context) error {
+	acc_id := ctx.Param("acc_id")
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"].(string)
+	role := claims["role"].(string)
+
+	acc, err := accountService.GetAccountByID(acc_id)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	if userID != acc.CustomerID && (role == "customer" || role == "company") {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "Acces to other acc banking account is prohibited",
+		})
+	}
+
+	acc.Blocked = true
+	err = accountService.UpdateAccount(acc)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": "account blocked",
+	})
+}
+
+func UnblockAccount(ctx echo.Context) error {
+	acc_id := ctx.Param("acc_id")
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+
+	acc, err := accountService.GetAccountByID(acc_id)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	if utils.GetPrivelegeLevel(role) < utils.GetPrivelegeLevel("manager") {
+		return ctx.JSON(http.StatusForbidden, map[string]string{
+			"message": "only managers and admins can unblock the account",
+		})
+	}
+
+	acc.Blocked = false
+	err = accountService.UpdateAccount(acc)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": "account blocked",
+	})
 }

@@ -36,7 +36,6 @@ func RegisterStaffMember(ctx echo.Context) error {
 	logger.Info(fmt.Sprintf("Created staff member with id %s", staffMember.ID))
 
 	token, err := myJWT.GenerateJWT(staffMember.ID, staffMember.Role)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -44,7 +43,6 @@ func RegisterStaffMember(ctx echo.Context) error {
 	}
 
 	err = staffService.CreateStaffMember(staffMember)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -58,7 +56,7 @@ func RegisterStaffMember(ctx echo.Context) error {
 }
 
 func LoginStaffMember(ctx echo.Context) error {
-	var loginRequest = new(auth.LoginRequest)
+	loginRequest := new(auth.LoginRequest)
 
 	if err := ctx.Bind(loginRequest); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -67,7 +65,6 @@ func LoginStaffMember(ctx echo.Context) error {
 	}
 
 	staffMember, err := staffService.GetStaffMemberByEmail(loginRequest.Username)
-
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
 			"message": "Staff member with such username doesn't exist",
@@ -81,7 +78,6 @@ func LoginStaffMember(ctx echo.Context) error {
 	}
 
 	token, err := myJWT.GenerateJWT(staffMember.ID, staffMember.Role)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -174,6 +170,24 @@ func UpdateStaffMember(ctx echo.Context) error {
 			"message": err.Error(),
 		})
 	}
+	admin, err := staffService.GetStaffMemberByID(userID)
+
+	if updatedStaffMember.Role == "admin" {
+		if role != "admin" {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{
+				"message": "unable to promote",
+			})
+		} else {
+			if err != nil {
+				return ctx.JSON(http.StatusInternalServerError, map[string]string{
+					"message": err.Error(),
+				})
+			}
+
+			admin.Role = "manager"
+			err = staffService.UpdateStaffMember(admin)
+		}
+	}
 
 	staff.UpdateStaffMemberInfo(staffMember, updatedStaffMember)
 
@@ -184,8 +198,9 @@ func UpdateStaffMember(ctx echo.Context) error {
 	}
 
 	err = staffService.UpdateStaffMember(updatedStaffMember)
-
 	if err != nil {
+		admin.Role = "admin"
+		err = staffService.UpdateStaffMember(admin)
 		return ctx.JSON(http.StatusNotFound, map[string]string{
 			"message": err.Error(),
 		})
