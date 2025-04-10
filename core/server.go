@@ -69,7 +69,7 @@ func NewEchoServer() Server {
 	staffGroup.GET("/:id", api_v1.GetStaffMember, auth.JWTMiddleware())
 	staffGroup.DELETE("/:id", api_v1.DeleteStaffMember, auth.JWTMiddleware())
 	staffGroup.PATCH("/:id", api_v1.UpdateStaffMember, auth.JWTMiddleware())
-	staffGroup.POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc)
+	staffGroup.DELETE("/" h echo.HandlerFunc, m ...echo.MiddlewareFunc)
 
 	bankGroup := es.server.Group("/bank")
 	bankGroup.POST("/register", api_v1.RegisterBank)
