@@ -22,7 +22,7 @@ func CreateAccount(ctx echo.Context) error {
 
 	if err := ctx.Bind(accRequest); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": "Invalid request (request invalid)",
+			"message": "Invalid request",
 		})
 	}
 

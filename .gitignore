@@ -1,3 +1,4 @@
 *.exe
 secret_key.txt
 oopLab1
+.idea/

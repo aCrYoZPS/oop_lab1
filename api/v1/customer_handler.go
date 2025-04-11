@@ -35,7 +35,6 @@ func RegisterCustomer(ctx echo.Context) error {
 	logger.Info(fmt.Sprintf("Created cust with id %s", cust.ID))
 
 	token, err := myJWT.GenerateJWT(cust.ID, "cust")
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -43,7 +42,6 @@ func RegisterCustomer(ctx echo.Context) error {
 	}
 
 	err = custService.CreateCustomer(cust)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -57,7 +55,7 @@ func RegisterCustomer(ctx echo.Context) error {
 }
 
 func LoginCustomer(ctx echo.Context) error {
-	var loginRequest = new(auth.LoginRequest)
+	loginRequest := new(auth.LoginRequest)
 
 	if err := ctx.Bind(loginRequest); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -66,7 +64,6 @@ func LoginCustomer(ctx echo.Context) error {
 	}
 
 	cust, err := custService.GetCustomerByEmail(loginRequest.Username)
-
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
 			"message": "Customer with such username doesn't exist",
@@ -80,7 +77,6 @@ func LoginCustomer(ctx echo.Context) error {
 	}
 
 	token, err := myJWT.GenerateJWT(cust.ID, "cust")
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -107,7 +103,6 @@ func GetCustomer(ctx echo.Context) error {
 	}
 
 	cust, err := custService.GetCustomerByID(id)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -130,7 +125,6 @@ func DeleteCustomer(ctx echo.Context) error {
 	}
 
 	err := custService.DeleteCustomer(id)
-
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -161,7 +155,6 @@ func UpdateCustomer(ctx echo.Context) error {
 	}
 
 	cust, err := custService.GetCustomerByID(userID)
-
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
 			"message": err.Error(),
@@ -177,7 +170,6 @@ func UpdateCustomer(ctx echo.Context) error {
 	}
 
 	err = custService.UpdateCustomer(updatedCustomer)
-
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, map[string]string{
 			"message": err.Error(),

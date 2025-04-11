@@ -20,9 +20,9 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(string)
 	role := claims["role"].(string)
-	acc_id := ctx.Param("acc_id")
+	accId := ctx.Param("acc_id")
 
-	acc, err := accountService.GetAccountByID(acc_id)
+	acc, err := accountService.GetAccountByID(accId)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
@@ -67,8 +67,8 @@ func CreateSelfTransaction(ctx echo.Context) error {
 	transact.MoneyDelta = delta.MoneyDelta
 	transact.Blocked = delta.Blocked
 	transact.ActorID = userID
-	transact.SrcAccountID = acc_id
-	transact.DestAccountID = acc_id
+	transact.SrcAccountID = accId
+	transact.DestAccountID = accId
 	if transact.MoneyDelta > 0 {
 		transact.Type = transactions.TopUp
 	} else {
